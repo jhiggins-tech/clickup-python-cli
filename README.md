@@ -2,11 +2,22 @@
 
 A thin CLI wrapper for the [ClickUp API](https://developer.clickup.com/reference).
 
-## Setup
+## Install
 
 Requires Python 3.11+ and [UV](https://docs.astral.sh/uv/).
 
+### Run directly with `uvx` (no install needed)
+
 ```bash
+export CLICKUP_API_KEY=pk_your_token_here
+uvx --from git+https://github.com/jhiggins-tech/clickup-python-cli clickup workspaces
+```
+
+### Local development
+
+```bash
+git clone https://github.com/jhiggins-tech/clickup-python-cli.git
+cd clickup-python-cli
 uv sync
 ```
 

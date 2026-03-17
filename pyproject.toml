@@ -20,6 +20,10 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
+[project.urls]
+Homepage = "https://github.com/jhiggins-tech/clickup-python-cli"
+Repository = "https://github.com/jhiggins-tech/clickup-python-cli"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
