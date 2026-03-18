@@ -48,6 +48,43 @@ def format_shared(shared: dict) -> None:
         click.echo("  No shared items.")
 
 
+def format_all_tasks(
+    groups: list[dict],
+    *,
+    status: str | None = None,
+    assignee: str | None = None,
+    limit: int = 0,
+) -> None:
+    """Print tasks grouped by list, with optional client-side filters."""
+    total = 0
+    for group in groups:
+        tasks = group["tasks"]
+        if status:
+            status_lower = status.lower()
+            tasks = [t for t in tasks if t.get("status", {}).get("status", "").lower() == status_lower]
+        if assignee:
+            assignee_lower = assignee.lower()
+            tasks = [
+                t for t in tasks
+                if any(
+                    assignee_lower in (a.get("username") or "").lower()
+                    or assignee_lower in (a.get("email") or "").lower()
+                    for a in t.get("assignees", [])
+                )
+            ]
+        if not tasks:
+            continue
+        click.echo(f"\nList: {group['list_name']} ({group['list_id']})")
+        for task in tasks:
+            if limit and total >= limit:
+                return
+            task_status = task.get("status", {}).get("status", "?")
+            click.echo(f"  {task['id']}  [{task_status}]  {task['name']}")
+            total += 1
+    if total == 0:
+        click.echo("  No tasks found.")
+
+
 def format_task_detail(task: dict) -> None:
     click.echo(f"Task:        {task['name']}")
     click.echo(f"ID:          {task['id']}")

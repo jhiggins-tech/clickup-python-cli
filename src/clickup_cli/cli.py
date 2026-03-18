@@ -117,6 +117,25 @@ def subtasks(ctx, task_id):
     formatting.format_tasks(items)
 
 
+@cli.command("all-tasks")
+@click.argument("team_id", required=False)
+@click.option("--status", "-s", help="Filter by status (e.g. 'in progress').")
+@click.option("--assignee", "-a", help="Filter by assignee username or email.")
+@click.option("--limit", "-n", type=int, default=0, help="Max number of tasks to display.")
+@click.pass_context
+def all_tasks(ctx, team_id, status, assignee, limit):
+    """List all tasks across every list in a workspace."""
+    client = ctx.obj["client"]
+    if not team_id:
+        teams = client.get_workspaces()
+        if not teams:
+            click.echo("No workspaces found.", err=True)
+            raise SystemExit(1)
+        team_id = str(teams[0]["id"])
+    groups = client.get_all_tasks(team_id)
+    formatting.format_all_tasks(groups, status=status, assignee=assignee, limit=limit)
+
+
 @cli.command("create-subtask")
 @click.argument("list_id")
 @click.argument("parent_id")
