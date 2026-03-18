@@ -128,6 +128,15 @@ class TestClientHierarchy:
         assert "status" in task
         assert "url" in task
 
+    def test_get_all_tasks(self, client: ClickUpClient) -> None:
+        if not discovered.team_id:
+            pytest.skip("No workspace discovered")
+        tasks = client.get_all_tasks(discovered.team_id)
+        assert isinstance(tasks, list)
+        for task in tasks:
+            assert "id" in task
+            assert "name" in task
+
     def test_get_subtasks(self, client: ClickUpClient) -> None:
         if not discovered.task_id:
             pytest.skip("No task discovered")
@@ -183,6 +192,12 @@ class TestCLICommands:
         assert result.exit_code == 0, result.output
         assert "Task:" in result.output
         assert "ID:" in result.output
+
+    def test_all_tasks_command(self, runner: CliRunner) -> None:
+        if not discovered.team_id:
+            pytest.skip("No workspace discovered")
+        result = runner.invoke(cli, ["all-tasks", discovered.team_id])
+        assert result.exit_code == 0, result.output
 
     def test_subtasks_command(self, runner: CliRunner) -> None:
         if not discovered.task_id:

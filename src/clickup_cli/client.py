@@ -65,11 +65,14 @@ class ClickUpClient:
             params["include_closed"] = "true"
         return self._get(f"/list/{list_id}/task", params=params)["tasks"]
 
-    def get_task(self, task_id: str) -> dict:
-        return self._get(f"/task/{task_id}")
+    def get_task(self, task_id: str, *, include_subtasks: bool = False) -> dict:
+        params: dict[str, Any] = {}
+        if include_subtasks:
+            params["include_subtasks"] = "true"
+        return self._get(f"/task/{task_id}", params=params or None)
 
     def get_subtasks(self, task_id: str) -> list[dict]:
-        task = self.get_task(task_id)
+        task = self.get_task(task_id, include_subtasks=True)
         return task.get("subtasks", [])
 
     def create_task(self, list_id: str, name: str, **kwargs: Any) -> dict:
@@ -78,3 +81,37 @@ class ClickUpClient:
 
     def create_subtask(self, list_id: str, parent_id: str, name: str, **kwargs: Any) -> dict:
         return self.create_task(list_id, name, parent=parent_id, **kwargs)
+
+    def get_all_tasks(
+        self,
+        team_id: str,
+        *,
+        statuses: list[str] | None = None,
+        assignees: list[str] | None = None,
+        include_closed: bool = False,
+        subtasks: bool = False,
+    ) -> list[dict]:
+        """Fetch filtered tasks across a workspace via GET /team/{team_id}/task.
+
+        Automatically paginates through all pages (100 tasks per page).
+        """
+        all_tasks: list[dict] = []
+        page = 0
+        while True:
+            params: dict[str, Any] = {"page": page}
+            if include_closed:
+                params["include_closed"] = "true"
+            if subtasks:
+                params["subtasks"] = "true"
+            if statuses:
+                for i, s in enumerate(statuses):
+                    params[f"statuses[{i}]"] = s
+            if assignees:
+                for i, a in enumerate(assignees):
+                    params[f"assignees[{i}]"] = a
+            batch = self._get(f"/team/{team_id}/task", params=params).get("tasks", [])
+            all_tasks.extend(batch)
+            if len(batch) < 100:
+                break
+            page += 1
+        return all_tasks

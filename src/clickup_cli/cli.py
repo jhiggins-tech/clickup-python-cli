@@ -80,7 +80,7 @@ def shared(ctx, team_id):
 @click.pass_context
 def task(ctx, task_id):
     """Show task detail."""
-    t = ctx.obj["client"].get_task(task_id)
+    t = ctx.obj["client"].get_task(task_id, include_subtasks=True)
     formatting.format_task_detail(t)
 
 
@@ -115,6 +115,33 @@ def subtasks(ctx, task_id):
         click.echo("  No subtasks.")
         return
     formatting.format_tasks(items)
+
+
+@cli.command("all-tasks")
+@click.argument("team_id", required=False)
+@click.option("--status", "-s", multiple=True, help="Filter by status (repeatable, e.g. -s 'to do' -s 'in progress').")
+@click.option("--assignee", "-a", multiple=True, help="Filter by assignee user ID (repeatable).")
+@click.option("--subtasks", is_flag=True, help="Include subtasks in results.")
+@click.option("--closed", is_flag=True, help="Include closed tasks.")
+@click.option("--limit", "-n", type=int, default=0, help="Max number of tasks to display.")
+@click.pass_context
+def all_tasks(ctx, team_id, status, assignee, subtasks, closed, limit):
+    """List all tasks across a workspace."""
+    client = ctx.obj["client"]
+    if not team_id:
+        teams = client.get_workspaces()
+        if not teams:
+            click.echo("No workspaces found.", err=True)
+            raise SystemExit(1)
+        team_id = str(teams[0]["id"])
+    tasks = client.get_all_tasks(
+        team_id,
+        statuses=list(status) or None,
+        assignees=list(assignee) or None,
+        include_closed=closed,
+        subtasks=subtasks,
+    )
+    formatting.format_all_tasks(tasks, limit=limit)
 
 
 @cli.command("create-subtask")
