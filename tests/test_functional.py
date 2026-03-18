@@ -193,6 +193,13 @@ class TestCLICommands:
         assert "Task:" in result.output
         assert "ID:" in result.output
 
+    def test_update_command_no_options(self, runner: CliRunner) -> None:
+        """update with no fields should fail with usage error."""
+        if not discovered.task_id:
+            pytest.skip("No task discovered")
+        result = runner.invoke(cli, ["update", discovered.task_id])
+        assert result.exit_code != 0
+
     def test_all_tasks_command(self, runner: CliRunner) -> None:
         if not discovered.team_id:
             pytest.skip("No workspace discovered")

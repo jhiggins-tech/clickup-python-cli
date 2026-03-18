@@ -107,6 +107,32 @@ def create(ctx, list_id, name, description, status, priority):
 
 @cli.command()
 @click.argument("task_id")
+@click.option("--name", help="Update task name.")
+@click.option("--description", "-d", help="Update task description.")
+@click.option("--status", "-s", help="Update task status.")
+@click.option("--priority", "-p", type=int, help="Update priority (1=urgent, 2=high, 3=normal, 4=low).")
+@click.pass_context
+def update(ctx, task_id, name, description, status, priority):
+    """Update an existing task."""
+    kwargs = {}
+    if name is not None:
+        kwargs["name"] = name
+    if description is not None:
+        kwargs["description"] = description
+    if status is not None:
+        kwargs["status"] = status
+    if priority is not None:
+        kwargs["priority"] = priority
+    if not kwargs:
+        raise click.UsageError("Provide at least one field to update (--name, -d, -s, -p).")
+    t = ctx.obj["client"].update_task(task_id, **kwargs)
+    click.echo(f"Updated: {t['id']}  {t['name']}")
+    click.echo(f"Status:  {t.get('status', {}).get('status', '?')}")
+    click.echo(f"URL:     {t.get('url', '')}")
+
+
+@cli.command()
+@click.argument("task_id")
 @click.pass_context
 def subtasks(ctx, task_id):
     """List subtasks of a task."""

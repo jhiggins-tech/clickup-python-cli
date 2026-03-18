@@ -39,6 +39,10 @@ class ClickUpClient:
     def _post(self, path: str, json: dict | None = None) -> dict:
         return self._request("POST", path, json=json)
 
+    def _put(self, path: str, json: dict | None = None) -> dict:
+        return self._request("PUT", path, json=json)
+
+
     def get_workspaces(self) -> list[dict]:
         return self._get("/team")["teams"]
 
@@ -78,6 +82,9 @@ class ClickUpClient:
     def create_task(self, list_id: str, name: str, **kwargs: Any) -> dict:
         body = {"name": name, **kwargs}
         return self._post(f"/list/{list_id}/task", json=body)
+
+    def update_task(self, task_id: str, **kwargs: Any) -> dict:
+        return self._put(f"/task/{task_id}", json=kwargs)
 
     def create_subtask(self, list_id: str, parent_id: str, name: str, **kwargs: Any) -> dict:
         return self.create_task(list_id, name, parent=parent_id, **kwargs)
