@@ -53,10 +53,18 @@ def format_task_detail(task: dict) -> None:
     click.echo(f"ID:          {task['id']}")
     click.echo(f"Status:      {task.get('status', {}).get('status', '?')}")
     click.echo(f"Priority:    {(task.get('priority') or {}).get('priority', 'none')}")
+    parent = task.get("parent")
+    if parent:
+        click.echo(f"Parent:      {parent}")
     assignees = task.get("assignees", [])
     names = ", ".join(a.get("username", a.get("email", "?")) for a in assignees)
     click.echo(f"Assignees:   {names or 'none'}")
     click.echo(f"URL:         {task.get('url', '')}")
+    subtasks = task.get("subtasks", [])
+    if subtasks:
+        click.echo(f"Subtasks:    {len(subtasks)}")
+        for st in subtasks:
+            click.echo(f"  {st['id']}  {st['name']}")
     desc = task.get("description", "")
     if desc:
         click.echo(f"\n{desc[:500]}")

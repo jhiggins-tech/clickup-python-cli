@@ -57,12 +57,24 @@ class ClickUpClient:
     def get_shared(self, team_id: str) -> dict:
         return self._get(f"/team/{team_id}/shared")["shared"]
 
-    def get_tasks(self, list_id: str, page: int = 0) -> list[dict]:
-        return self._get(f"/list/{list_id}/task", params={"page": page})["tasks"]
+    def get_tasks(self, list_id: str, page: int = 0, *, subtasks: bool = False, include_closed: bool = False) -> list[dict]:
+        params: dict[str, Any] = {"page": page}
+        if subtasks:
+            params["subtasks"] = "true"
+        if include_closed:
+            params["include_closed"] = "true"
+        return self._get(f"/list/{list_id}/task", params=params)["tasks"]
 
     def get_task(self, task_id: str) -> dict:
         return self._get(f"/task/{task_id}")
 
+    def get_subtasks(self, task_id: str) -> list[dict]:
+        task = self.get_task(task_id)
+        return task.get("subtasks", [])
+
     def create_task(self, list_id: str, name: str, **kwargs: Any) -> dict:
         body = {"name": name, **kwargs}
         return self._post(f"/list/{list_id}/task", json=body)
+
+    def create_subtask(self, list_id: str, parent_id: str, name: str, **kwargs: Any) -> dict:
+        return self.create_task(list_id, name, parent=parent_id, **kwargs)

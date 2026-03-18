@@ -128,6 +128,12 @@ class TestClientHierarchy:
         assert "status" in task
         assert "url" in task
 
+    def test_get_subtasks(self, client: ClickUpClient) -> None:
+        if not discovered.task_id:
+            pytest.skip("No task discovered")
+        subtasks = client.get_subtasks(discovered.task_id)
+        assert isinstance(subtasks, list)
+
 
 # ---------------------------------------------------------------------------
 # CLI-level tests (via Click's CliRunner)
@@ -177,6 +183,12 @@ class TestCLICommands:
         assert result.exit_code == 0, result.output
         assert "Task:" in result.output
         assert "ID:" in result.output
+
+    def test_subtasks_command(self, runner: CliRunner) -> None:
+        if not discovered.task_id:
+            pytest.skip("No task discovered")
+        result = runner.invoke(cli, ["subtasks", discovered.task_id])
+        assert result.exit_code == 0, result.output
 
     def test_shared_command(self, runner: CliRunner) -> None:
         if not discovered.team_id:
