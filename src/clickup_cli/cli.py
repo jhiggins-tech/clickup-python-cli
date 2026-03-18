@@ -108,23 +108,34 @@ def create(ctx, list_id, name, description, status, priority):
 @cli.command()
 @click.argument("task_id")
 @click.option("--name", help="Update task name.")
-@click.option("--description", "-d", help="Update task description.")
+@click.option("--description", "-d", help="Update task description. Use ' ' to clear.")
 @click.option("--status", "-s", help="Update task status.")
-@click.option("--priority", "-p", type=int, help="Update priority (1=urgent, 2=high, 3=normal, 4=low).")
+@click.option("--priority", "-p", type=int, help="Priority (1=urgent, 2=high, 3=normal, 4=low).")
+@click.option("--due-date", type=int, help="Due date as Unix timestamp in milliseconds.")
+@click.option("--start-date", type=int, help="Start date as Unix timestamp in milliseconds.")
+@click.option("--time-estimate", type=int, help="Time estimate in milliseconds.")
+@click.option("--points", type=float, help="Sprint points.")
+@click.option("--parent", "parent_id", help="Move subtask to a different parent task ID.")
+@click.option("--archived", type=bool, help="Archive or unarchive the task.")
 @click.pass_context
-def update(ctx, task_id, name, description, status, priority):
+def update(ctx, task_id, name, description, status, priority, due_date,
+           start_date, time_estimate, points, parent_id, archived):
     """Update an existing task."""
-    kwargs = {}
-    if name is not None:
-        kwargs["name"] = name
-    if description is not None:
-        kwargs["description"] = description
-    if status is not None:
-        kwargs["status"] = status
-    if priority is not None:
-        kwargs["priority"] = priority
+    field_map = {
+        "name": name,
+        "description": description,
+        "status": status,
+        "priority": priority,
+        "due_date": due_date,
+        "start_date": start_date,
+        "time_estimate": time_estimate,
+        "points": points,
+        "parent": parent_id,
+        "archived": archived,
+    }
+    kwargs = {k: v for k, v in field_map.items() if v is not None}
     if not kwargs:
-        raise click.UsageError("Provide at least one field to update (--name, -d, -s, -p).")
+        raise click.UsageError("Provide at least one field to update.")
     t = ctx.obj["client"].update_task(task_id, **kwargs)
     click.echo(f"Updated: {t['id']}  {t['name']}")
     click.echo(f"Status:  {t.get('status', {}).get('status', '?')}")
