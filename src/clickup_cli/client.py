@@ -82,32 +82,36 @@ class ClickUpClient:
     def create_subtask(self, list_id: str, parent_id: str, name: str, **kwargs: Any) -> dict:
         return self.create_task(list_id, name, parent=parent_id, **kwargs)
 
-    def get_all_tasks(self, team_id: str) -> list[dict]:
-        """Fetch all tasks across every list in a workspace.
+    def get_all_tasks(
+        self,
+        team_id: str,
+        *,
+        statuses: list[str] | None = None,
+        assignees: list[str] | None = None,
+        include_closed: bool = False,
+        subtasks: bool = False,
+    ) -> list[dict]:
+        """Fetch filtered tasks across a workspace via GET /team/{team_id}/task.
 
-        Returns a list of dicts: {"list_id": str, "list_name": str, "tasks": [...]}.
+        Automatically paginates through all pages (100 tasks per page).
         """
-        results: list[dict] = []
-        spaces = self.get_spaces(team_id)
-        for space in spaces:
-            space_id = str(space["id"])
-            all_lists: list[dict] = []
-            for folder in self.get_folders(space_id):
-                all_lists.extend(self.get_lists(str(folder["id"])))
-            all_lists.extend(self.get_folderless_lists(space_id))
-            for lst in all_lists:
-                list_id = str(lst["id"])
-                tasks: list[dict] = []
-                page = 0
-                while True:
-                    batch = self.get_tasks(list_id, page=page)
-                    tasks.extend(batch)
-                    if len(batch) < 100:
-                        break
-                    page += 1
-                results.append({
-                    "list_id": list_id,
-                    "list_name": lst["name"],
-                    "tasks": tasks,
-                })
-        return results
+        all_tasks: list[dict] = []
+        page = 0
+        while True:
+            params: dict[str, Any] = {"page": page}
+            if include_closed:
+                params["include_closed"] = "true"
+            if subtasks:
+                params["subtasks"] = "true"
+            if statuses:
+                for i, s in enumerate(statuses):
+                    params[f"statuses[{i}]"] = s
+            if assignees:
+                for i, a in enumerate(assignees):
+                    params[f"assignees[{i}]"] = a
+            batch = self._get(f"/team/{team_id}/task", params=params).get("tasks", [])
+            all_tasks.extend(batch)
+            if len(batch) < 100:
+                break
+            page += 1
+        return all_tasks

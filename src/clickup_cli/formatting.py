@@ -48,41 +48,26 @@ def format_shared(shared: dict) -> None:
         click.echo("  No shared items.")
 
 
-def format_all_tasks(
-    groups: list[dict],
-    *,
-    status: str | None = None,
-    assignee: str | None = None,
-    limit: int = 0,
-) -> None:
-    """Print tasks grouped by list, with optional client-side filters."""
-    total = 0
-    for group in groups:
-        tasks = group["tasks"]
-        if status:
-            status_lower = status.lower()
-            tasks = [t for t in tasks if t.get("status", {}).get("status", "").lower() == status_lower]
-        if assignee:
-            assignee_lower = assignee.lower()
-            tasks = [
-                t for t in tasks
-                if any(
-                    assignee_lower in (a.get("username") or "").lower()
-                    or assignee_lower in (a.get("email") or "").lower()
-                    for a in t.get("assignees", [])
-                )
-            ]
-        if not tasks:
-            continue
-        click.echo(f"\nList: {group['list_name']} ({group['list_id']})")
-        for task in tasks:
-            if limit and total >= limit:
-                return
-            task_status = task.get("status", {}).get("status", "?")
-            click.echo(f"  {task['id']}  [{task_status}]  {task['name']}")
-            total += 1
-    if total == 0:
+def format_all_tasks(tasks: list[dict], *, limit: int = 0) -> None:
+    """Print tasks from a workspace, grouped by their list."""
+    if not tasks:
         click.echo("  No tasks found.")
+        return
+    current_list = None
+    total = 0
+    for task in tasks:
+        if limit and total >= limit:
+            return
+        list_info = task.get("list", {})
+        list_id = list_info.get("id", "?")
+        list_name = list_info.get("name", "?")
+        list_key = list_id
+        if list_key != current_list:
+            click.echo(f"\nList: {list_name} ({list_id})")
+            current_list = list_key
+        status = task.get("status", {}).get("status", "?")
+        click.echo(f"  {task['id']}  [{status}]  {task['name']}")
+        total += 1
 
 
 def format_task_detail(task: dict) -> None:

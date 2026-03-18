@@ -131,13 +131,11 @@ class TestClientHierarchy:
     def test_get_all_tasks(self, client: ClickUpClient) -> None:
         if not discovered.team_id:
             pytest.skip("No workspace discovered")
-        groups = client.get_all_tasks(discovered.team_id)
-        assert isinstance(groups, list)
-        for group in groups:
-            assert "list_id" in group
-            assert "list_name" in group
-            assert "tasks" in group
-            assert isinstance(group["tasks"], list)
+        tasks = client.get_all_tasks(discovered.team_id)
+        assert isinstance(tasks, list)
+        for task in tasks:
+            assert "id" in task
+            assert "name" in task
 
     def test_get_subtasks(self, client: ClickUpClient) -> None:
         if not discovered.task_id:
