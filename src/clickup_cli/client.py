@@ -65,11 +65,14 @@ class ClickUpClient:
             params["include_closed"] = "true"
         return self._get(f"/list/{list_id}/task", params=params)["tasks"]
 
-    def get_task(self, task_id: str) -> dict:
-        return self._get(f"/task/{task_id}")
+    def get_task(self, task_id: str, *, include_subtasks: bool = False) -> dict:
+        params: dict[str, Any] = {}
+        if include_subtasks:
+            params["include_subtasks"] = "true"
+        return self._get(f"/task/{task_id}", params=params or None)
 
     def get_subtasks(self, task_id: str) -> list[dict]:
-        task = self.get_task(task_id)
+        task = self.get_task(task_id, include_subtasks=True)
         return task.get("subtasks", [])
 
     def create_task(self, list_id: str, name: str, **kwargs: Any) -> dict:

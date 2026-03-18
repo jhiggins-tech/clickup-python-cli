@@ -80,7 +80,7 @@ def shared(ctx, team_id):
 @click.pass_context
 def task(ctx, task_id):
     """Show task detail."""
-    t = ctx.obj["client"].get_task(task_id)
+    t = ctx.obj["client"].get_task(task_id, include_subtasks=True)
     formatting.format_task_detail(t)
 
 
