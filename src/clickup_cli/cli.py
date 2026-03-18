@@ -57,10 +57,12 @@ def lists(ctx, folder_id, space_id):
 @cli.command()
 @click.argument("list_id")
 @click.option("--page", default=0, help="Page number (100 tasks per page).")
+@click.option("--subtasks", is_flag=True, help="Include subtasks in results.")
+@click.option("--closed", is_flag=True, help="Include closed tasks.")
 @click.pass_context
-def tasks(ctx, list_id, page):
+def tasks(ctx, list_id, page, subtasks, closed):
     """List tasks in a list."""
-    items = ctx.obj["client"].get_tasks(list_id, page=page)
+    items = ctx.obj["client"].get_tasks(list_id, page=page, subtasks=subtasks, include_closed=closed)
     formatting.format_tasks(items)
 
 
@@ -100,4 +102,39 @@ def create(ctx, list_id, name, description, status, priority):
         kwargs["priority"] = priority
     t = ctx.obj["client"].create_task(list_id, name, **kwargs)
     click.echo(f"Created: {t['id']}  {t['name']}")
+    click.echo(f"URL:     {t.get('url', '')}")
+
+
+@cli.command()
+@click.argument("task_id")
+@click.pass_context
+def subtasks(ctx, task_id):
+    """List subtasks of a task."""
+    items = ctx.obj["client"].get_subtasks(task_id)
+    if not items:
+        click.echo("  No subtasks.")
+        return
+    formatting.format_tasks(items)
+
+
+@cli.command("create-subtask")
+@click.argument("list_id")
+@click.argument("parent_id")
+@click.argument("name")
+@click.option("--description", "-d", help="Task description.")
+@click.option("--status", "-s", help="Task status.")
+@click.option("--priority", "-p", type=int, help="Priority (1=urgent, 2=high, 3=normal, 4=low).")
+@click.pass_context
+def create_subtask(ctx, list_id, parent_id, name, description, status, priority):
+    """Create a subtask under a parent task."""
+    kwargs = {}
+    if description:
+        kwargs["description"] = description
+    if status:
+        kwargs["status"] = status
+    if priority is not None:
+        kwargs["priority"] = priority
+    t = ctx.obj["client"].create_subtask(list_id, parent_id, name, **kwargs)
+    click.echo(f"Created: {t['id']}  {t['name']}")
+    click.echo(f"Parent:  {parent_id}")
     click.echo(f"URL:     {t.get('url', '')}")
